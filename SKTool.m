@@ -7,7 +7,7 @@
 //
 
 #import "SKTool.h"
-#import <CoreText/CoreText.h>
+
 @implementation SKTool
 
 + (NSString *)getCurrentDateStrWithSepStr:(NSString *)sepStr
@@ -352,186 +352,495 @@
 
 }
 
-#pragma mark - 改变字符串的字间距
-/**
- *  单纯改变句子的字间距（需要 <CoreText/CoreText.h>）
- *
- *  @param targetString 需要更改的字符串
- *  @param space       字间距
- *
- *  @return 生成的富文本
- */
-+ (NSMutableAttributedString *)sk_changeStringSpaceWithTargetString:(NSString *)targetString Space:(CGFloat)space{
-    
-    NSMutableAttributedString *attributedStr = [[NSMutableAttributedString alloc] initWithString:targetString];
-    long number = space;
-    CFNumberRef num = CFNumberCreate(kCFAllocatorDefault,kCFNumberSInt8Type,&number);
-    [attributedStr addAttribute:(id)kCTKernAttributeName value:(__bridge id)num range:NSMakeRange(0,[attributedStr length])];
-    CFRelease(num);
-    return attributedStr;
-    
-}
-#pragma mark - 改变字符串的行间距
-/**
- *  单纯改变段落的行间距
- *
- *  @param targetString 需要更改的字符串
- *  @param lineSpace   行间距
- *
- *  @return 生成的富文本
- */
-+ (NSMutableAttributedString *)sk_changeLineSpaceWithTargetString:(NSString *)targetString LineSpace:(CGFloat)lineSpace{
-    
-    
-    NSMutableAttributedString *attributedStr = [[NSMutableAttributedString alloc] initWithString:targetString];
-    NSMutableParagraphStyle * paragraphStyle = [[NSMutableParagraphStyle alloc] init];
-    [paragraphStyle setLineSpacing:lineSpace];
-    
-    [attributedStr addAttribute:NSParagraphStyleAttributeName value:paragraphStyle range:NSMakeRange(0, [targetString length])];
-    return attributedStr;
-    
-}
-
-#pragma mark - 改变字符串行间距和竖间距
-/**
- *  同时更改行间距和字间距
- *
- *  @param targetString 需要改变的字符串
- *  @param rowSpace   行间距
- *  @param colSpace   字间距
- *
- *  @return 生成的富文本
- */
-+ (NSMutableAttributedString *)sk_changeColAndRowSpaceWithTargetString:(NSString *)targetString rowSpace:(CGFloat)rowSpace colSpace:(CGFloat)colSpace
+/** MARK: 判断数组是否有重复元素*/
++ (BOOL)isArrayContainSameObjWithArr:(NSArray *)resArr
 {
     
-    NSMutableAttributedString *attributedStr = [[NSMutableAttributedString alloc] initWithString:targetString];
-    NSMutableParagraphStyle * paragraphStyle = [[NSMutableParagraphStyle alloc] init];
-    [paragraphStyle setLineSpacing:rowSpace];
-    [attributedStr addAttribute:NSParagraphStyleAttributeName value:paragraphStyle range:NSMakeRange(0, [targetString length])];
-    long number = colSpace;
-    CFNumberRef num = CFNumberCreate(kCFAllocatorDefault,kCFNumberSInt8Type,&number);
-    [attributedStr addAttribute:(id)kCTKernAttributeName value:(__bridge id)num range:NSMakeRange(0,[attributedStr length])];
-    CFRelease(num);
-    return attributedStr;
-    
+    NSSet *set = [NSSet setWithArray:resArr];
+    return  set.count == resArr.count ? NO : YES;
 }
 
-#pragma mark - 改变某些文字的颜色 并单独设置其字体
-/**
- *  改变某些文字的颜色 并单独设置其字体
- *
- *  @param font        设置的字体
- *  @param color       颜色
- *  @param targetString 总的字符串
- *  @param subArray    想要变色的字符数组
- *
- *  @return 生成的富文本
- */
-+ (NSMutableAttributedString *)sk_changeFontAndColor:(UIFont *)font Color:(UIColor *)color TargetString:(NSString *)targetString SubStringArray:(NSArray *)subArray
+/** MARK: 判断字符串是否是合法数字*/
++ (BOOL)isMoneyNumber:(NSString *)strValue;
 {
-    NSMutableAttributedString *attributedStr = [[NSMutableAttributedString alloc] initWithString:targetString];
-    
-    for (NSString *rangeStr in subArray) {
-        
-        NSRange range = [targetString rangeOfString:rangeStr options:NSBackwardsSearch];
-        
-        [attributedStr addAttribute:NSForegroundColorAttributeName value:color range:range];
-        [attributedStr addAttribute:NSFontAttributeName value:font range:range];
+    if (strValue == nil || [strValue length] <= 0)
+    {
+        return NO;
     }
     
-    return attributedStr;
+    NSCharacterSet *cs = [[NSCharacterSet characterSetWithCharactersInString:@"0123456789."] invertedSet];
+    NSString *filtered = [[strValue componentsSeparatedByCharactersInSet:cs] componentsJoinedByString:@""];
+    
+    if (![strValue isEqualToString:filtered])
+    {
+        return NO;
+    }
+    return YES;
+}
+
+/** MARK: 创建请求结束后的提示AlertView*/
++ (void)createAlertWithStr:(NSString *)str{
+    
+    UILabel *alertView = [[UILabel alloc] init];
+    CGFloat width = [self widthOfStr:str font:[UIFont systemFontOfSize:16.f] height:40.0];
+    if (width + 20 > [UIScreen mainScreen].bounds.size.width) {
+        
+        
+        CGFloat height = [self heightOfStr:str font:[UIFont systemFontOfSize:16.f] width:[UIScreen mainScreen].bounds.size.width - 20.0];
+        alertView.frame = CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width - 20, height + 24.0);
+    }
+    else {
+        alertView.frame = CGRectMake(0, 0, width + 20, 40.0);
+    }
+    //    UILabel *alertView =  [[UILabel alloc] initWithFrame:CGRectMake(0, 0, width + 20, 40.0)];
+    alertView.numberOfLines = 0;
+    alertView.center = CGPointMake([UIScreen mainScreen].bounds.size.width / 2, [UIScreen mainScreen].bounds.size.height / 2);
+    alertView.alpha = 0;
+    alertView.backgroundColor = [UIColor colorWithRed:40/255.f green:40/255.f blue:40/255.f alpha:1];
+    [alertView setText:str];
+    [alertView setTextColor:[UIColor whiteColor]];
+    [alertView setFont:Font(16.0)];
+    alertView.textAlignment = NSTextAlignmentCenter;
+    alertView.layer.masksToBounds = YES;
+    alertView.layer.cornerRadius = 10.0;
+    
+    [[[UIApplication sharedApplication].delegate window] addSubview:alertView];
+    [UIView animateWithDuration:0.3 animations:^{
+        alertView.alpha = 0.9;
+    }];
+    __weak __typeof(self) weakSelf = self;
+    [NSTimer scheduledTimerWithTimeInterval:1.0 target:weakSelf selector:@selector(timerAction:) userInfo:@{@"alertView": alertView} repeats:NO];
     
 }
-#pragma mark - 改变一句话中的某些字的颜色
-/**
- *  单纯改变一句话中的某些字的颜色（一种颜色）改变所有
- *
- *  @param color    需要改变成的颜色
- *  @param targetString 总的字符串
- *  @param subArray 需要改变颜色的文字数组(要是有相同的 只取第一个)
- *
- *  @return 生成的富文本
- */
-+ (NSMutableAttributedString *)sk_changeCorlorWithColor:(UIColor *)color TargetString:(NSString *)targetString SubStringArray:(NSArray *)subArray{
+
+/** MARK: 创建请求结束后的提示AlertView second*/
++ (void)createAlertWithStr:(NSString *)str second:(CGFloat)second{
     
-    NSMutableAttributedString *attributedStr = [[NSMutableAttributedString alloc] initWithString:targetString];
-    for (NSString *rangeStr in subArray) {
+    UILabel *alertView = [[UILabel alloc] init];
+    CGFloat width = [self widthOfStr:str font:[UIFont systemFontOfSize:16.f] height:40.0];
+    if (width + 20 > [UIScreen mainScreen].bounds.size.width) {
         
-        NSMutableArray *array = [self sk_getRangeWithTotalString:targetString SubString:rangeStr];
+        CGFloat height = [self heightOfStr:str font:[UIFont systemFontOfSize:16.f] width:[UIScreen mainScreen].bounds.size.width - 20.0];
+        alertView.frame = CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width - 20, height + 24.0);
+    }
+    else {
+        alertView.frame = CGRectMake(0, 0, width + 20, 40.0);
+    }
+    //    UILabel *alertView =  [[UILabel alloc] initWithFrame:CGRectMake(0, 0, width + 20, 40.0)];
+    alertView.numberOfLines = 0;
+    alertView.center = CGPointMake([UIScreen mainScreen].bounds.size.width / 2, [UIScreen mainScreen].bounds.size.height / 2);
+    alertView.alpha = 0;
+    alertView.backgroundColor = [UIColor colorWithRed:40/255.f green:40/255.f blue:40/255.f alpha:1];
+    [alertView setText:str];
+    [alertView setTextColor:[UIColor whiteColor]];
+    [alertView setFont:Font(16.0)];
+    alertView.textAlignment = NSTextAlignmentCenter;
+    alertView.layer.masksToBounds = YES;
+    alertView.layer.cornerRadius = 10.0;
+    
+    [[[UIApplication sharedApplication].delegate window] addSubview:alertView];
+    [UIView animateWithDuration:0.3 animations:^{
+        alertView.alpha = 0.9;
+    }];
+    __weak __typeof(self) weakSelf = self;
+    [NSTimer scheduledTimerWithTimeInterval:second target:weakSelf selector:@selector(timerAction:) userInfo:@{@"alertView": alertView} repeats:NO];
+    
+}
+
+
+/** MARK:判断字符串是否为空或者都是空格 */
++ (BOOL)isBlankString:(NSString *)string
+{
+    if (string == nil){
+        return YES;
+    }
+    if (string == NULL){
+        return YES;
+    }
+    if ([string isKindOfClass:[NSNull class]]){
+        return YES;
+    }
+    //判断字符串是否全部为空格（[NSCharacterSet whitespaceAndNewlineCharacterSet]去掉字符串两端的空格)
+    if ([[string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] length] == 0){
+        return YES;
+    }
+    return NO;
+}
++ (NSMutableAttributedString *)getAttributString:(NSString *)normalString Color:(UIColor *)changeColor FontSize:(UIFont *)fontSize {
+    //方法一
+    NSCharacterSet* nonDigits =[[NSCharacterSet decimalDigitCharacterSet] invertedSet];
+    //取出数组
+    NSArray *tempArr = [normalString componentsSeparatedByCharactersInSet:nonDigits];
+    
+    NSMutableArray *changeArr = [NSMutableArray array];
+    for (NSString *tempStr in tempArr) {
+        if (tempStr.length > 0) {
+            [changeArr addObject:tempStr];
+        }
+    }
+    
+    
+    NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:normalString];
+    
+    for (NSString *tempStr in changeArr) {
         
-        for (NSNumber *rangeNum in array) {
+        NSArray *tempArr = [self rangeOfSubString:tempStr inString:normalString];
+        
+        for (NSString *rangeStr in tempArr) {
             
-            NSRange range = [rangeNum rangeValue];
-            [attributedStr addAttribute:NSForegroundColorAttributeName value:color range:range];
+            NSRange range = NSRangeFromString(rangeStr);
+            if (range.location + range.length < normalString.length) {
+                
+                NSString *tempStr = [normalString substringWithRange:NSMakeRange(range.location + range.length, 1)];
+                
+                if ([tempStr isEqualToString:@"."]) {
+                    range = NSMakeRange(range.location, range.length + 1);
+                }                
+            }
+            [attributedString addAttribute:NSForegroundColorAttributeName
+                                     value:changeColor
+                                     range:range];
+            [attributedString addAttribute:NSFontAttributeName value:fontSize range:range];
         }
         
     }
     
-    return attributedStr;
-    
+    return attributedString;
 }
 
 
-
-
-#pragma mark - 6 Extract Method
-/**
- *  获取某个字符串中子字符串的位置数组
- *
- *  @param totalString 总的字符串
- *  @param subString   子字符串
- *
- *  @return 位置数组
- */
-+ (NSMutableArray *)sk_getRangeWithTotalString:(NSString *)totalString SubString:(NSString *)subString {
++ (NSArray *)rangeOfSubString:(NSString *)subStr inString:(NSString *)string {
     
-    NSMutableArray *arrayRanges = [NSMutableArray array];
+    NSMutableArray *rangeArray = [NSMutableArray array];
+    NSString *string1 = [string stringByAppendingString:subStr];
+    NSString *temp;
     
-    if (subString == nil && [subString isEqualToString:@""]) {
-        return nil;
-    }
-    
-    NSRange rang = [totalString rangeOfString:subString];
-    
-    if (rang.location != NSNotFound && rang.length != 0) {
+    for (int i = 0; i < string.length; i ++) {
         
-        [arrayRanges addObject:[NSNumber valueWithRange:rang]];
-        
-        NSRange      rang1 = {0,0};
-        NSInteger location = 0;
-        NSInteger   length = 0;
-        
-        for (int i = 0;; i++) {
-            
-            if (0 == i) {
-                
-                location = rang.location + rang.length;
-                length = totalString.length - rang.location - rang.length;
-                rang1 = NSMakeRange(location, length);
-            } else {
-                
-                location = rang1.location + rang1.length;
-                length = totalString.length - rang1.location - rang1.length;
-                rang1 = NSMakeRange(location, length);
-            }
-            
-            rang1 = [totalString rangeOfString:subString options:NSCaseInsensitiveSearch range:rang1];
-            
-            if (rang1.location == NSNotFound && rang1.length == 0) {
-                
-                break;
-            } else {
-                
-                [arrayRanges addObject:[NSNumber valueWithRange:rang1]];
-            }
+        temp = [string1 substringWithRange:NSMakeRange(i, subStr.length)];
+        if ([temp isEqualToString:subStr]) {
+            NSRange range = NSMakeRange(i, subStr.length);
+            [rangeArray addObject:NSStringFromRange(range)];
         }
         
-        return arrayRanges;
     }
-    
-    return nil;
+    return rangeArray;
 }
 
+
+#pragma mark - 获取字符串自适应后所占宽度
++ (CGFloat)widthOfStr:(NSString *)str
+                 font:(UIFont *)font
+               height:(CGFloat)height
+{
+    CGSize rect;
+    NSDictionary *dic=@{NSFontAttributeName:font};
+    rect = [str boundingRectWithSize:CGSizeMake(10000, height) options:NSStringDrawingTruncatesLastVisibleLine | NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading
+                          attributes:dic context:nil].size;
+    
+    return rect.width;
+}
+
+
++ (CGFloat)getHeightOfStr:(NSString *)str
+                 font:(UIFont *)font
+               width:(CGFloat)width
+{
+    CGSize rect;
+    NSDictionary *dic=@{NSFontAttributeName:font};
+    rect = [str boundingRectWithSize:CGSizeMake(width, 10000) options:NSStringDrawingTruncatesLastVisibleLine | NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading
+                          attributes:dic context:nil].size;
+    
+    return rect.height;
+}
+
+
+/** MARK: 数组字典转为json字符串 */
++(NSString*)transferDataTOjsonString:(id)object
+{
+    NSString *jsonString = nil;
+    NSError *error;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:object
+                                                       options:NSJSONWritingPrettyPrinted // Pass 0 if you don't care about the readability of the generated string
+                                                         error:&error];
+    if (! jsonData) {
+        NSLog(@"Got an error: %@", error);
+    } else {
+        jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    }
+    NSMutableString *mutStr = [NSMutableString stringWithString:jsonString];
+    NSRange range = {0,jsonString.length};
+    //去掉字符串中的空格
+    [mutStr replaceOccurrencesOfString:@" " withString:@"" options:NSLiteralSearch range:range];
+    NSRange range2 = {0,mutStr.length};
+    //去掉字符串中的换行符
+    [mutStr replaceOccurrencesOfString:@"\n" withString:@"" options:NSLiteralSearch range:range2];
+    return mutStr;
+}
+
+
+/** MARK: json字符串 转换为数组字典 */
++(id)transferJsonStringTOData:(NSString *)string
+{
+    NSError *error;
+    id object = [NSJSONSerialization JSONObjectWithData:[string dataUsingEncoding:NSUTF8StringEncoding] options:(NSJSONReadingMutableContainers) error:&error];
+    if (error != nil) {
+#ifdef DEBUG
+        NSLog(@"fail to get dictioanry or array from JSON: %@, error: %@", string, error);
+#endif
+    }
+    return object;
+    
+}
+
+/** MARK: 改变按钮的图片文子位置 */
++ (UIButton *)changeBtnTitleAndImageLocationWithType:(NSInteger)type btn:(UIButton *)btn
+{
+    if (type == 0 ){
+        
+        btn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+        [btn setTitleEdgeInsets:UIEdgeInsetsMake(-btn.imageView.frame.size.height ,-btn.imageView.frame.size.width, 0.0,0.0)];
+        [btn setImageEdgeInsets:UIEdgeInsetsMake(0.0, 0.0,-btn.imageView.frame.size.height, -btn.titleLabel.bounds.size.width)];
+        return btn;
+    }else
+    {
+        btn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+        [btn setTitleEdgeInsets:UIEdgeInsetsMake(btn.imageView.frame.size.height ,-btn.imageView.frame.size.width, 0.0,0.0)];
+        [btn setImageEdgeInsets:UIEdgeInsetsMake(-btn.imageView.frame.size.height, 0.0,0.0, -btn.titleLabel.bounds.size.width)];
+        
+        return btn;
+        
+    }
+}
+
+/** MARK: 将时间字符串转换为NSDate 格式*/
++ (NSDate *)changeTimeStringtoDate:(NSString *)dateStr
+{
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setDateFormat:@"YYYY-MM-dd HH:mm:ss"];
+    NSDate *datestr = [dateFormatter dateFromString:dateStr];
+    return datestr;
+}
+
+
+
+
+#pragma mark -  Extract Method
++ (void)timerAction:(NSTimer *)timer
+{
+    UILabel *alertView = [[timer userInfo] objectForKey:@"alertView"];
+    // 移除alertView
+    [alertView removeFromSuperview];
+    alertView = nil;
+    
+}
+
+
+
++ (CGFloat)heightOfStr:(NSString *)str
+                  font:(UIFont *)font
+                 width:(CGFloat)width
+{
+    CGSize rect;
+    NSDictionary *dic=@{NSFontAttributeName:font};
+    rect = [str boundingRectWithSize:CGSizeMake(width, 10000) options:NSStringDrawingTruncatesLastVisibleLine | NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading
+                          attributes:dic context:nil].size;
+    
+    return rect.height;
+}
+
+
+/** MARK: 找到某个字符第一次出现的位置
+ */
+
++ (NSInteger)findTargetIdx:(NSString *)targetStr parrentStr:(NSString *)parrentStr
+{
+    
+    if ([parrentStr containsString:targetStr]) {
+        
+        NSArray *resArr = [parrentStr componentsSeparatedByString:targetStr];
+        NSString *firstObj = resArr.firstObject;
+        return firstObj.length;        
+    }else{
+        
+        return NSNotFound;
+    }
+
+    
+}
+
+/** MARK: 获取距离当前日期的时间 */
+
++ (NSString *)getDateFromTodayDateStr:(NSString *)targetDateStr
+
+{
+    
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    
+    [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    
+    NSLog(@"newsDate = %@",targetDateStr);
+    
+    NSDate *newsDateFormatted = [dateFormatter dateFromString:targetDateStr];
+    
+    NSTimeZone *timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
+    
+    [dateFormatter setTimeZone:timeZone];
+    
+    NSDate* current_date = [[NSDate alloc] init];
+    
+    NSTimeInterval time=[current_date timeIntervalSinceDate:newsDateFormatted];//间隔的秒数
+    
+    int year =((int)time)/(3600*24*30*12);
+    
+    int month=((int)time)/(3600*24*30);
+    
+    int days=((int)time)/(3600*24);
+    
+    int hours=((int)time)%(3600*24)/3600;
+    
+    int minute=((int)time)%(3600*24)/60;
+    
+    NSLog(@"time=%f",(double)time);
+    
+    NSString *dateContent;
+    
+    if (year!=0) {
+        
+        dateContent = targetDateStr;
+        
+    }else if(month!=0){
+        
+        dateContent = [NSString stringWithFormat:@"%@%i%@",@"  ",month,@"个月前"];
+        
+    }else if(days!=0){
+        
+        dateContent = [NSString stringWithFormat:@"%@%i%@",@"  ",days,@"天前"];
+        
+    }else if(hours!=0){
+        
+        dateContent = [NSString stringWithFormat:@"%@%i%@",@"  ",hours,@"小时前"];
+        
+    }else {
+        
+        dateContent = [NSString stringWithFormat:@"%@%i%@",@"  ",minute,@"分钟前"];
+        
+    }
+    
+    return dateContent;
+    
+}
+
+/** MARK: 去除空格和换行*/
++ (NSString *)removeSpaceAndNewline:(NSString *)str
+
+{
+    
+    NSString *temp = [str stringByReplacingOccurrencesOfString:@" " withString:@""];
+    
+    temp = [temp stringByReplacingOccurrencesOfString:@"\r" withString:@""];
+    
+    temp = [temp stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+    
+    return temp;
+    
+}
+
+
+/** MARK: 输入银行卡号 每隔四位添加一个空格字符串*/
++ (NSString *)getNewBankNumWitOldBankNum:(NSString *)bankNum{
+    NSMutableString *mutableStr;
+    if (bankNum.length) {
+        mutableStr = [NSMutableString stringWithString:bankNum];
+        for (int i = 0 ; i < mutableStr.length; i ++) {
+            if (i>2&&i<mutableStr.length - 3) {
+                //                [mutableStr replaceCharactersInRange:NSMakeRange(i, 1) withString:@"*"];
+            }
+        }
+        NSString *text = mutableStr;
+        NSCharacterSet *characterSet = [NSCharacterSet characterSetWithCharactersInString:@"0123456789\b"];
+        text = [text stringByReplacingOccurrencesOfString:@" " withString:@""];
+        NSString *newString = @"";
+        while (text.length > 0) {
+            NSString *subString = [text substringToIndex:MIN(text.length, 4)];
+            newString = [newString stringByAppendingString:subString];
+            if (subString.length == 4) {
+                newString = [newString stringByAppendingString:@" "];
+            }
+            text = [text substringFromIndex:MIN(text.length, 4)];
+        }
+        newString = [newString stringByTrimmingCharactersInSet:[characterSet invertedSet]];
+        return newString;
+    }
+    return bankNum;
+}
+/** MARK: 删除字符串的后面0*/
+-(NSString*)deleteFloatAllZero:(NSString*)string
+
+{
+
+    NSArray * arrStr=[string componentsSeparatedByString:@"."];
+
+    NSString *str=arrStr.firstObject;
+
+    NSString *str1=arrStr.lastObject;
+
+    while ([str1 hasSuffix:@"0"]) {
+
+    str1=[str1 substringToIndex:(str1.length-1)];
+
+    }
+
+    return (str1.length>0)?[NSString stringWithFormat:@"%@.%@",str,str1]:str;
+
+}
+
++ (NSString *)removeSpace:(NSString *)str{
+    
+    NSString *temp = [str stringByReplacingOccurrencesOfString:@" " withString:@""];
+    return temp;    
+}
+
++ (NSString *)getUUID
+{
+    NSString *identifierForVendor = [[UIDevice currentDevice].identifierForVendor UUIDString];
+    identifierForVendor = [identifierForVendor stringByReplacingOccurrencesOfString:@"-" withString:@""];    
+    return identifierForVendor;
+}
+
+
++ (CGFloat)seperatedByDouHao:(NSString *)contentStr
+{
+    CGFloat count = 0.f;
+    if (contentStr.length > 0) {
+        if ([contentStr containsString:@","]) {
+            count = [contentStr componentsSeparatedByString:@","].count;
+        }else{
+            count = 1.f;
+        }
+    }
+    
+    return count;
+    
+}
+
+
+
+/** MARK: 计算字符串的高度 */
++(CGFloat)calculatedStringHeight:(NSString *)string WithSize:(CGSize)size font:(CGFloat)fontSize{
+    
+    return [string boundingRectWithSize:size options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:fontSize]} context:nil].size.height;
+}
+
+
+/** MARK: 将字符串金额抓换为万为单位 */
++ (NSString *)formateAmountString:(NSString *)amountStr
+{
+    
+    amountStr = [NSString stringWithFormat:@"%.2fw",amountStr.floatValue / 10000];
+    
+    return amountStr;
+    
+}
 
 @end
